@@ -24,3 +24,13 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
+type CommandInitializers interface {
+	InitCommands(root *cobra.Command)
+}
+
+func InitCommands(cmds ...CommandInitializers) {
+	for _, c := range cmds {
+		c.InitCommands(rootCmd)
+	}
+}

@@ -1,0 +1,62 @@
+{{ define "warning" }}{{ if not .Complete }}<div class="warning"><strong>⚠ Отчёт неполный</strong><ul>{{ range .Reasons }}<li>{{ . }}</li>{{ else }}<li>Причина не указана.</li>{{ end }}</ul></div>{{ end }}{{ end }}
+{{ define "files" }}
+{{ with .Files }}<ul>{{ range . }}<li><code class="change-file">{{ .Repository }}: {{ .Path }}</code></li>{{ end }}</ul>{{ end }}
+{{ end }}
+{{ define "findings" }}
+{{ range . }}<article class="card change"><p class="change-description">{{ .Description }}</p>{{ template "files" . }}</article>{{ else }}<div class="card">Нет данных для отображения.</div>{{ end }}
+{{ end }}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Product }} — отчёт об изменениях</title>
+    <style>{{ .CSS }}</style>
+</head>
+<body>
+<div class="container">
+    <header class="header"><div><h1>{{ .Product }}</h1><p class="text-muted">Отчёт об изменениях · {{ .CreatedAt.Format "02.01.2006 15:04" }}</p></div></header>
+    <section class="card">
+        <h2>Сравнение веток</h2>
+        <div class="branches"><span class="branch">{{ .Branches.Base }}</span><span class="branch-arrow">→</span><span class="branch">{{ .Branches.Target }}</span></div>
+        <p>Репозиторий: {{ .Repo.Name }}</p>
+        <p>Base SHA: <code>{{ if .Repo.BaseSHA }}{{ .Repo.BaseSHA }}{{ else }}не определён{{ end }}</code></p>
+        <p>Target SHA: <code>{{ if .Repo.TargetSHA }}{{ .Repo.TargetSHA }}{{ else }}не определён{{ end }}</code></p>
+    </section>
+    {{ template "warning" .Completeness }}
+    <section class="card"><h2>Статистика изменений</h2>
+        {{ if .Statistics.Available }}<div class="statistics-grid">
+            <div><div class="stat-value">{{ .Statistics.FilesChanged }}</div><div class="stat-label">Изменено файлов</div></div>
+            <div><div class="stat-value additions">+{{ .Statistics.Insertions }}</div><div class="stat-label">Добавлено строк</div></div>
+            <div><div class="stat-value deletions">-{{ .Statistics.Deletions }}</div><div class="stat-label">Удалено строк</div></div>
+            <div><div class="stat-value">{{ .Statistics.Excluded }}</div><div class="stat-label">Исключено файлов</div></div>
+        </div>{{ else }}<p>Статистика недоступна.</p>{{ end }}
+    </section>
+    <section class="card"><h2>Общее заключение</h2><p>{{ .Analysis.Summary }}</p></section>
+    <nav class="tabs" aria-label="Разделы отчёта">
+        <button class="tab active" data-tab="product">Продукт</button>
+        <button class="tab" data-tab="development">Разработка</button>
+        <button class="tab" data-tab="qa">QA</button>
+    </nav>
+    <section class="tab-content active" data-tab-content="product">
+        {{ template "warning" .Completeness }}
+        <h2>Пользовательские сценарии</h2>{{ template "findings" .Analysis.Product.Scenarios }}
+        <h2>Ожидаемые бизнес-эффекты</h2>
+        <p>Ожидаемые бизнес-эффекты — гипотезы. Их необходимо проверить измерениями после релиза.</p>
+        {{ range .Analysis.Product.Effects }}<article class="card change"><p>{{ .Description }}</p>{{ template "files" . }}{{ with .Metrics }}<p>Предлагаемые метрики:</p><ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}</article>{{ else }}<div class="card">Нет данных для отображения.</div>{{ end }}
+    </section>
+    <section class="tab-content" data-tab-content="development">
+        {{ template "warning" .Completeness }}
+        <h2>Изменения</h2>{{ template "findings" .Analysis.Development.Changes }}
+        <h2>Риски</h2>{{ template "findings" .Analysis.Development.Risks }}
+        <h2>Неясные изменения</h2>{{ template "findings" .Analysis.Development.Unclear }}
+        <h2>Противоречия описанию продукта</h2>{{ template "findings" .Analysis.Development.Contradictions }}
+    </section>
+    <section class="tab-content" data-tab-content="qa">
+        {{ template "warning" .Completeness }}
+        <h2>Что проверить</h2><p>Проверки рекомендованы и не выполнялись Argus.</p>{{ template "findings" .Analysis.QA }}
+    </section>
+</div>
+<script>{{ .JS }}</script>
+</body>
+</html>
