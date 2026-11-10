@@ -47,6 +47,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmd.InitCommands(gitSvc)
+	cmd.InitCommands(gitSvc, config.EditorService)
 	cmd.Execute()
 }
