@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+
+	"github.com/openai/openai-go/v3/responses"
 )
 
 // mockLLMAnalysis is example data, not the result of analyzing the supplied diff.
@@ -89,7 +91,7 @@ func getDiff(
 }
 
 func newDiffAnalysisPropmt(diff string) string {
-	return fmt.Sprintf("my message to make html-report %s", diff)
+	return fmt.Sprintf("make analysis from this diff and send in answer just JSON. answer example:%s diff:%s", mockLLMAnalysis, diff)
 }
 
 func getDiffAnalysis(
@@ -97,18 +99,18 @@ func getDiffAnalysis(
 	ai llm.Provider,
 	req llm.Request,
 ) (*llm.Response, error) {
-	// resp, err := ai.Generate(ctx, req)
-	// if err != nil {
-	// 	err = fmt.Errorf("failed to get diff html-report: %w", err)
-	// 	return nil, err
-	// }
-	// if resp.FinishReason != string(responses.ResponseStatusCompleted) {
-	// 	return nil, fmt.Errorf(
-	// 		"diff analysis did not complete: %s",
-	// 		resp.FinishReason,
-	// 	)
-	// }
-	return &llm.Response{Content: mockLLMAnalysis, FinishReason: "completed"}, nil
+	resp, err := ai.Generate(ctx, req)
+	if err != nil {
+		err = fmt.Errorf("failed to get diff html-report: %w", err)
+		return nil, err
+	}
+	if resp.FinishReason != string(responses.ResponseStatusCompleted) {
+		return nil, fmt.Errorf(
+			"diff analysis did not complete: %s",
+			resp.FinishReason,
+		)
+	}
+	return &llm.Response{Content: resp.Content, FinishReason: resp.FinishReason}, nil
 }
 
 func writeDiffReport(

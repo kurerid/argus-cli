@@ -3,7 +3,6 @@ package git
 import (
 	"argus-agent/internal/config"
 	"argus-agent/internal/llm"
-	"argus-agent/internal/llm/openai"
 	"argus-agent/internal/report"
 
 	"github.com/spf13/cobra"
@@ -26,15 +25,12 @@ type reportGenerator interface {
 
 func NewService(
 	cfg config.Git,
-	aiApiKey string,
+	ai llm.Provider,
 	reportService reportGenerator,
 ) (GitService, error) {
-	openaiProvider := openai.NewProvider(
-		openai.NewClient(aiApiKey),
-	)
 	return &Service{
 		cfg:           cfg,
-		AI:            openaiProvider,
+		AI:            ai,
 		reportService: reportService,
 	}, nil
 }

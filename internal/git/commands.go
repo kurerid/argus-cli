@@ -45,7 +45,7 @@ func (s *Service) newCompareCommand() *cobra.Command {
 	cmd.Flags().StringVar(
 		&model,
 		"model",
-		llm.DEFAULT_MODEL,
+		llm.DEFAULT_OPENROUTER_MODEL,
 		"LLM model",
 	)
 
