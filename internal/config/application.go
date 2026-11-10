@@ -6,32 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 )
-
-const configPath = "./argus-config.json"
 
 type Application struct {
 	Git `json:"git"`
 	LLM `json:"llm"`
 }
 
-type Git struct {
-	UserEmail  string `json:"user_email"`
-	UserName   string `json:"user_name"`
-	SSHKeyPath string `json:"ssh_key_path"`
-}
-
-type LLM struct {
-	APIKey  string `json:"api_key"`
-	BaseURL string `json:"base_url"`
-	APIMode string `json:"api_mode"`
-}
-
 func Load() (*Application, error) {
-	data, err := os.ReadFile(configPath)
+	path, err := configPath()
+	if err != nil {
+		return nil, err
+	}
+	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		app := defaultConfig()
-		if err := save(configPath, app); err != nil {
+		if err := save(path, app); err != nil {
 			return nil, fmt.Errorf("create config %s: %w", configPath, err)
 		}
 		return app, nil
@@ -49,8 +40,10 @@ func Load() (*Application, error) {
 
 func defaultConfig() *Application {
 	return &Application{
-		Git: Git{},
-		LLM: LLM{},
+		Git: loadSystemGitSettings(),
+		LLM: LLM{
+			BaseURL: "api.openai.com",
+		},
 	}
 }
 
@@ -73,4 +66,16 @@ func save(path string, app *Application) error {
 		return err
 	}
 	return f.Close()
+}
+
+func configPath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", err
+	}
+	dir = filepath.Join(dir, "argus")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "config.json"), nil
 }
