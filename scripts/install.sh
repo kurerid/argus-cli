@@ -1,13 +1,13 @@
 #!/bin/sh
 # Установщик argus.
 #
-#   curl -fsSL https://raw.githubusercontent.com/kurerid/argus-cli/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/kurerid/argus-cli/main/scripts/install.sh | sh
 #
 # Переменные окружения (необязательные):
-#   VERSION=v1.2.3        конкретная версия (по умолчанию последняя)
+#   VERSION=v1.2.3        конкретная версия (по умолчанию последняя, включая pre-release)
 #   INSTALL_DIR=~/bin     куда ставить (по умолчанию /usr/local/bin или ~/.local/bin)
 #
-# Ожидаемые имена файлов в релизе (дефолт GoReleaser):
+# Ожидаемые имена файлов в релизе (их собирает scripts/build-release.sh):
 #   argus_1.2.3_linux_amd64.tar.gz
 #   argus_1.2.3_darwin_arm64.tar.gz
 #   checksums.txt
@@ -69,9 +69,18 @@ detect_arch() {
   esac
 }
 
+extract_tag() { # stdin: JSON от GitHub API -> первый tag_name
+  grep '"tag_name"' | head -n1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/'
+}
+
 latest_version() {
-  fetch "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name"' | head -n1 | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/'
+  # /releases/latest не видит pre-release (alpha/beta/rc),
+  # поэтому, если стабильного релиза ещё нет, берём самый свежий из списка.
+  v="$(fetch "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | extract_tag || true)"
+  if [ -z "$v" ]; then
+    v="$(fetch "https://api.github.com/repos/${REPO}/releases?per_page=1" 2>/dev/null | extract_tag || true)"
+  fi
+  echo "$v"
 }
 
 verify_checksum() { # file checksums.txt
