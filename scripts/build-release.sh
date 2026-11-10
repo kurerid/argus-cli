@@ -50,9 +50,9 @@ for p in $PLATFORMS; do
 
   if [ "$os" = "windows" ]; then
     command -v zip >/dev/null 2>&1 || { echo "error: нужен zip для windows-архивов" >&2; exit 1; }
-    (cd "$stage" && zip -q -r "$dist/${name}.zip" .)
+    (cd "$stage" && zip -q "$dist/${name}.zip" "$exe" README.md LICENSE)
   else
-    tar -czf "$dist/${name}.tar.gz" -C "$stage" .
+    tar -czf "$dist/${name}.tar.gz" -C "$stage" "$exe" README.md LICENSE
   fi
 done
 
