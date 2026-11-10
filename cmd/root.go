@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:           "argus",
 	Short:         "Argus CLI",
-	Version:       "0.1.0-dev",
+	Version:       version,
 	Args:          cobra.NoArgs,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
