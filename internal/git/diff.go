@@ -58,7 +58,7 @@ func compareDiff(
 		return err
 	}
 
-	err = writeDiffReport(
+	reportPath, err := writeDiffReport(
 		reportService,
 		left,
 		right,
@@ -69,6 +69,7 @@ func compareDiff(
 		return err
 	}
 
+	fmt.Println("report was created in ", reportPath)
 	return nil
 }
 
@@ -117,10 +118,10 @@ func writeDiffReport(
 	reportService reportGenerator,
 	left, right, repoName string,
 	resp *llm.Response,
-) error {
+) (string, error) {
 	analysis, err := report.ParseLLMAnalysis(resp.Content)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	data := report.Report{

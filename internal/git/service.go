@@ -20,7 +20,7 @@ type Service struct {
 }
 
 type reportGenerator interface {
-	Generate(data report.Report) error
+	Generate(data report.Report) (string, error)
 }
 
 func NewService(
